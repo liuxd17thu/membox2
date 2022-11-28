@@ -8,7 +8,7 @@
     |<-[38]------------------><- VPN2-><--VPN1-><--VPN0-><--offset-->| VA
     |xxxxxxxx<-------------------PPN2-><--PPN1-><--PPN0-><--offset-->| PA
     |xxxxxxxxxx<-------------------PPN2-><--PPN1-><--PPN0->xxDAGUXWRV| PTE
-    valid value for VA & PA:
+    valid value for PA:
     0000 0000 0000 0000 <-> 0000 003f ffff ffff 256GiB
     ffff ffc0 0000 0000 <-> ffff ffff ffff ffff 256GiB
 */

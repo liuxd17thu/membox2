@@ -156,8 +156,10 @@ public:
                 blocks->erase(iter);
                 return 0;
             }
+            if(iter->addr > addr)
+                return -1;
         }
-        printf("Block address not exist: 0x%016lx\n", addr);
+        //printf("Block address not exist: 0x%016lx\n", addr);
         return -1;
     }
 
@@ -177,8 +179,9 @@ public:
         return -1;
     }
 
-    template<class T> int writeWord(uint64_t addr, const T* in){
-        return writeData(addr, sizeof(T), in);
+    template<class T> int writeWord(uint64_t addr, const T in){
+        T dat = in;
+        return writeData(addr, sizeof(T), &dat);
     }
 
     int readData(uint64_t addr, uint64_t length, void *data){
