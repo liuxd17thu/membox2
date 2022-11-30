@@ -46,7 +46,7 @@ public:
         else return true;
     }
     static uint64_t PTE2PA(uint64_t PTE){
-        return (PTE & 0x003ffffffffff300ull) << 2ull;
+        return (PTE & 0x003ffffffffffc00ull) << 2ull;
     }
     static uint64_t SetPTE(uint64_t PA, uint64_t mods){
         return ((PA & 0x00fffffffffff000ull) >> 2ull) | mods;

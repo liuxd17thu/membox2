@@ -50,7 +50,7 @@ public:
 
     Block(Block &&blk):
     addr(blk.addr), size(blk.size), pages(blk.pages){
-        printf("Move Constructor\n");
+        //printf("Move Constructor\n");
         blk.pages = nullptr;
     }
 
@@ -81,23 +81,23 @@ public:
     }
 
     int write(uint64_t base, uint64_t length, const void *data){ // 0 <= base < size
-        if(base + length >= size){
-            printf("Input is too long for block @0x%016lx\n", addr);
+        if(base + length > size){
+            printf("Input 0x%016lx + 0x%016lx is too long for block @0x%016lx\n", base, length, addr);
             return -1;
         }
         uint8_t *in = (uint8_t *)data;
-        for(uint64_t i = base; i < length && base + i < size; i++){
+        for(uint64_t i = 0ull; i < length && base + i < size; i++){
             pages->data[base + i] = in[i];
         }
         return 0;
     }
     int read(uint64_t base, uint64_t length, void *data){
-        if(base + length >= size){
-            printf("Input is too long for block @0x%016lx\n", addr);
+        if(base + length > size){
+            printf("Input 0x%016lx + 0x%016lx is too long for block @0x%016lx\n", base, length, addr);
             return -1;
         }
         uint8_t *out = (uint8_t *)data;
-        for(uint64_t i = base; i < length && base + i < size; i++){
+        for(uint64_t i = 0ull; i < length && base + i < size; i++){
             out[i] = pages->data[base + i];
         }
         return 0;

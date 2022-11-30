@@ -9,11 +9,11 @@ public:
     ~Memory(){
         delete pmm;
     }
-    int createRootPageTable(){
+    uint64_t createRootPageTable(){
         uint64_t root = pmm->findUsable(SV39::PageSize);
-        if(!root)
-            return -1;
-        return pmm->insertBlock(Block(root, SV39::PageSize, true));
+        if(root != 0)
+            pmm->insertBlock(Block(root, SV39::PageSize, true));
+        return root;
     }
     uint64_t allocateMemory(uint64_t root, uint64_t v_addr, uint64_t length){
         length = (length + SV39::PageSize - 1) / SV39::PageSize * SV39::PageSize;
@@ -23,7 +23,7 @@ public:
         if(pmm->insertBlock(Block(p_addr, length, true))) {
             return 0ull;
         }
-        uint64_t pt_idx[3] = {~0ull, ~0ull, ~0ull};// root, I, II
+        uint64_t pt_idx[3] = {~0ull, ~0ull, ~0ull};// rootpt, pt1, pt2
         for(uint64_t iter = 0ull; iter < length; iter += SV39::PageSize){
             if(SV39::VAextract((v_addr + iter), 0) != pt_idx[0]){ //may need a new entry in rootPT
                 pt_idx[0] = SV39::VAextract((v_addr + iter), 0); // refresh pt_idx[0]
@@ -33,7 +33,7 @@ public:
                         return 0;
                     }
                     pmm->insertBlock(Block(pt1_addr, SV39::PageSize, true)); // create and insert a PT1
-                    uint64_t rootpt_entry = SV39::SetPTE(pt1_addr, 0ull);
+                    uint64_t rootpt_entry = SV39::SetPTE(pt1_addr, SV39::V);
                     pmm->writeWord<uint64_t>(root + pt_idx[0]*sizeof(uint64_t), rootpt_entry);  // set rootPT entry
                 }
             }
@@ -47,11 +47,11 @@ public:
                         return 0;
                     }
                     pmm->insertBlock(Block(pt2_addr, SV39::PageSize, true)); // create and insert a PT2
-                    uint64_t pt1_entry = SV39::SetPTE(pt2_addr, 0ull);
+                    uint64_t pt1_entry = SV39::SetPTE(pt2_addr, SV39::V);
                     pmm->writeWord<uint64_t>(pt1_addr + pt_idx[1]*sizeof(uint64_t), pt1_entry);  // set PT1 entry
                 }
             }
-            uint64_t pt2_addr = SV39::PTE2PA(pmm->readWord<uint64_t>(pt1_addr + pt_idx[0]*sizeof(uint64_t)));
+            uint64_t pt2_addr = SV39::PTE2PA(pmm->readWord<uint64_t>(pt1_addr + pt_idx[1]*sizeof(uint64_t)));
 
             if(SV39::VAextract(v_addr + iter, 2) != pt_idx[2]){ // may need a new entry in PT2
                 pt_idx[2] = SV39::VAextract((v_addr + iter), 2); // refresh pt_idx[2]
@@ -77,7 +77,7 @@ public:
     int readDataVirtual(uint64_t root, uint64_t v_addr, uint64_t size, void *out){
         uint64_t vpn = 0ull; uint64_t len = 0ull;
         uint64_t p_addr = 0ull;
-        for(auto it = 0; it < size; it++){
+        for(uint64_t it = 0ull; it < size; it++){
             if(vpn != ((v_addr + it) & 0x0000007ffffff000ull)){
                 if(len){
                     pmm->readData(p_addr + it - len, len, (uint8_t *)out + it - len);
@@ -90,6 +90,25 @@ public:
             len++;
         }
         pmm->readData(p_addr + size - len, len, (uint8_t *)out + size - len);
+        return 0;
+    }
+
+    int writeDataVirtual(uint64_t root, uint64_t v_addr, uint64_t size, void *in){
+        uint64_t vpn = 0ull; uint64_t len = 0ull;
+        uint64_t p_addr = 0ull;
+        for(uint64_t it = 0ull; it < size; it++){
+            if(vpn != ((v_addr + it) & 0x0000007ffffff000ull)){
+                if(len){
+                    pmm->writeData(p_addr + it - len, len, (uint8_t *)in + it - len);
+                }
+                len = 0ull;
+                vpn = (v_addr + it) & 0x0000007ffffff000ull;
+                p_addr = addrConvert(root, v_addr + it);
+            }
+            if(!p_addr) return -1;
+            len++;
+        }
+        pmm->writeData(p_addr + size - len, len, (uint8_t *)in + size - len);
         return 0;
     }
 
