@@ -2,6 +2,7 @@
 
 class Memory{
 public:
+    // PhysicalMemory 提供用物理地址读写数据的方法 writeData() readData()
     PhysicalMemory *pmm;
     Memory(uint64_t max_range){
         pmm = new PhysicalMemory(max_range);
@@ -9,12 +10,14 @@ public:
     ~Memory(){
         delete pmm;
     }
+    // 为任务创建根页表
     uint64_t createRootPageTable(){
         uint64_t root = pmm->findUsable(SV39::PageSize);
         if(root != 0)
             pmm->insertBlock(Block(root, SV39::PageSize, true));
         return root;
     }
+    // 申请物理地址, 根据虚拟地址创建/写入页表项
     uint64_t allocateMemory(uint64_t root, uint64_t v_addr, uint64_t length){
         length = (length + SV39::PageSize - 1) / SV39::PageSize * SV39::PageSize;
         uint64_t p_addr = pmm->findUsable(length);
@@ -63,7 +66,7 @@ public:
         }
         return p_addr;
     }
-
+    // 虚实地址转换
     uint64_t addrConvert(uint64_t root, uint64_t v_addr){
         auto pt1_addr = SV39::PTE2PA(pmm->readWord<uint64_t>(root + SV39::VAextract(v_addr, 0)*sizeof(uint64_t)));
         if(!pt1_addr) return 0ull;
@@ -73,7 +76,7 @@ public:
         if(!p_addr) return 0ull;
         return p_addr | (v_addr & 0xfffull);
     }
-
+    // 用虚拟地址读数据
     int readDataVirtual(uint64_t root, uint64_t v_addr, uint64_t size, void *out){
         uint64_t vpn = 0ull; uint64_t len = 0ull;
         uint64_t p_addr = 0ull;
@@ -92,7 +95,7 @@ public:
         pmm->readData(p_addr + size - len, len, (uint8_t *)out + size - len);
         return 0;
     }
-
+    // 用虚拟地址写数据
     int writeDataVirtual(uint64_t root, uint64_t v_addr, uint64_t size, void *in){
         uint64_t vpn = 0ull; uint64_t len = 0ull;
         uint64_t p_addr = 0ull;
@@ -111,7 +114,7 @@ public:
         pmm->writeData(p_addr + size - len, len, (uint8_t *)in + size - len);
         return 0;
     }
-
+    // 释放物理内存, 改写页表项
     uint64_t releaseMemory(uint64_t root, uint64_t v_addr){
         uint64_t length = 0;
         uint64_t p_addr = addrConvert(root, v_addr);
@@ -133,7 +136,7 @@ public:
             pmm->writeWord<uint64_t>(pt2_addr + pt_idx[2]*sizeof(uint64_t), 0ull);
         }
     }
-
+    // 清理无用页表
     uint64_t cleanPageTable(uint64_t root){
         for(uint64_t it0 = 0; it0 < SV39::PageSize; it0 += sizeof(uint64_t)){
             if((pmm->readWord<uint64_t>(root + it0) & SV39::V) == 0ull)
@@ -169,7 +172,7 @@ public:
         }
         return 0;
     }
-
+    // 清理整个任务
     uint64_t cleanTask(uint64_t root){
         for(uint64_t it0 = 0; it0 < SV39::PageSize; it0 += sizeof(uint64_t)){
             if((pmm->readWord<uint64_t>(root + it0) & SV39::V) == 0ull)
