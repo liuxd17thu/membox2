@@ -183,6 +183,20 @@ public:
         T dat = in;
         return writeData(addr, sizeof(T), &dat);
     }
+    template<class T> int writeWords(uint64_t addr, uint64_t num, const T* in, const void *mask = nullptr){
+        if(mask == nullptr){
+            writeData(addr, num*sizeof(T), in);
+        }
+        else{
+            for(uint64_t i = 0; i < num; i++){
+                uint8_t maskbit = (((uint8_t *)mask)[i/8] >> (i%8)) & '\x01';
+                if(maskbit == '\x01'){
+                    writeWord<T>(addr + i * sizeof(T), in[i]);
+                }
+            }
+        }
+        return 0;
+    }
 
     int readData(uint64_t addr, uint64_t length, void *data){
         for(auto &iter: *blocks){
@@ -207,6 +221,19 @@ public:
             return out;
         else
             return 0;
+    }
+
+    template<class T> int readWords(u_int64_t addr, u_int64_t num, T *data, const void *mask = nullptr){
+        readData(addr, num * sizeof(T), data);
+        if(mask != nullptr){
+            for(uint64_t i = 0; i < num; i++){
+                uint8_t maskbit = (((uint8_t *)mask)[i/8] >> (i%8)) & '\x01';
+                if(maskbit == '\x00'){
+                    data[i] = 0;
+                }
+            }
+        }
+        return 0;
     }
 
     uint64_t findUsable(uint64_t size){
