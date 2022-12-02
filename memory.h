@@ -95,6 +95,19 @@ public:
         pmm->readData(p_addr + size - len, len, (uint8_t *)out + size - len);
         return 0;
     }
+    // 用物理地址读数据
+    int readDataPhysical(uint64_t p_addr, uint64_t length, void *data){
+        pmm->readData(p_addr, length, data);
+        return 0;
+    }
+    template<class T> T readWordPhysical(uint64_t p_addr){
+        return pmm->readWord<T>(p_addr);
+    }
+    template<class T> int readWordsPhysical(u_int64_t p_addr, u_int64_t num, T *data, const void *mask = nullptr){
+        pmm->readWords<T>(p_addr, num, data, mask);
+        return 0;
+    }
+
     // 用虚拟地址写数据
     int writeDataVirtual(uint64_t root, uint64_t v_addr, uint64_t size, void *in){
         uint64_t vpn = 0ull; uint64_t len = 0ull;
@@ -114,6 +127,18 @@ public:
         pmm->writeData(p_addr + size - len, len, (uint8_t *)in + size - len);
         return 0;
     }
+
+    // 用物理地址写数据
+    int writeDataPhysical(uint64_t p_addr, uint64_t length, const void *data){
+        return pmm->writeData(p_addr, length, data);
+    }
+    template<class T> int writeWordPhysical(uint64_t p_addr, const T in){
+        return pmm->writeWord<T>(p_addr, in);
+    }
+    template<class T> int writeWordsPhysical(u_int64_t p_addr, u_int64_t num, const T *in, const void *mask = nullptr){
+        return pmm->writeWords<T>(p_addr, num, in, mask);
+    }
+
     // 释放物理内存, 改写页表项
     uint64_t releaseMemory(uint64_t root, uint64_t v_addr){
         uint64_t length = 0;
