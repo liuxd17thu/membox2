@@ -166,7 +166,7 @@ public:
     int writeData(uint64_t addr, uint64_t length, const void *data){
         for(auto &iter: *blocks){
             if(addr >= iter.addr &&
-            addr + length <= iter.addr + iter.size){ // valid address
+               addr + length <= iter.addr + iter.size){ // valid address
                 if(iter.pages== nullptr){
                     printf("No pages in this block: 0x%016lx\n", addr);
                     return -1;
@@ -201,7 +201,7 @@ public:
     int readData(uint64_t addr, uint64_t length, void *data){
         for(auto &iter: *blocks){
             if(addr >= iter.addr &&
-            addr + length <= iter.addr + iter.size){
+               addr + length <= iter.addr + iter.size){
                 if(iter.pages== nullptr){
                     printf("No pages in this block: 0x%016lx\n", addr);
                     return -1;
@@ -214,7 +214,7 @@ public:
         return -1;
     }
 
-    template<class T> T readWord(u_int64_t addr){
+    template<class T> T readWord(uint64_t addr){
         T out;
         int flag = readData(addr, sizeof(T), &out);
         if(!flag)
@@ -223,7 +223,7 @@ public:
             return 0;
     }
 
-    template<class T> int readWords(u_int64_t addr, u_int64_t num, T *data, const void *mask = nullptr){
+    template<class T> int readWords(uint64_t addr, uint64_t num, T *data, const void *mask = nullptr){
         readData(addr, num * sizeof(T), data);
         if(mask != nullptr){
             for(uint64_t i = 0; i < num; i++){

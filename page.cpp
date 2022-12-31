@@ -31,3 +31,21 @@ int main(){
     }
     return 0;
 }
+
+void bugtest(){
+    uint64_t dd[8192] {0};
+    for(int i = 0; i < 8192; i += 1){
+        dd[i] = i;
+    }
+
+    Memory mem(4096ull * 64);
+    auto root = mem.createRootPageTable();
+    printf("Root: 0x%016lx\n", root);
+    mem.allocateMemory(root, 0x4000000000ull, 4096ull * 16);
+
+    mem.writeDataVirtual(root, 0x4000000000ull, 4096ull * 16, dd);
+
+    mem.releaseMemory(root, 0x4000000000ull);
+    mem.cleanPageTable(root);
+    mem.cleanTask(root);
+}
